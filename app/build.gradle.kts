@@ -5,11 +5,11 @@
 plugins {
     java
     application
-    id("webserver.java-application-conventions")
 }
 
 group = "webserver.app"
 version = "1.0-SNAPSHOT"
+
 val junitVersion = "5.9.2"
 val javaLanguageVersion = 17
 
