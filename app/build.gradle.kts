@@ -12,15 +12,19 @@ version = "1.0-SNAPSHOT"
 
 val junitVersion = "5.9.2"
 val javaLanguageVersion = 17
+val jacksonVersion = "2.16.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:${junitVersion}")
+    implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
 }
 
 java {
@@ -30,8 +34,7 @@ java {
 }
 
 application {
-    // Define the main class for the application.
-    mainClass.set("webserver.app.App")
+    mainClass.set("webserver.app.HttpServer")
 }
 
 tasks.getByName<Test>("test") {
