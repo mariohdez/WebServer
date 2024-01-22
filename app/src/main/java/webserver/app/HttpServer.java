@@ -3,17 +3,32 @@
  */
 package webserver.app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import webserver.config.Configuration;
 import webserver.config.ConfigurationManager;
+import webserver.core.ServerListenerThread;
+
+import java.io.IOException;
 
 public class HttpServer {
+    private final static Logger LOGGER = LoggerFactory.getLogger(HttpServer.class);
     public static void main(String[] args) {
-        System.out.println("Server starting...");
+        LOGGER.info("Server starting...");
 
         ConfigurationManager.getInstance().loadConfigurationFile("app/src/main/resources/http.json");
         Configuration conf = ConfigurationManager.getInstance().getCurrentConfiguration();
 
-        System.out.println("using port: " + conf.getPort());
-        System.out.println("using webroot: " + conf.getWebroot());
+        LOGGER.info("using port: " + conf.getPort());
+        LOGGER.info("using webroot: " + conf.getWebroot());
+
+        try {
+            ServerListenerThread serverListenerThread = new ServerListenerThread(conf.getPort(), conf.getWebroot());
+            LOGGER.info(serverListenerThread.getWebroot());
+            serverListenerThread.start();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
     }
 }
