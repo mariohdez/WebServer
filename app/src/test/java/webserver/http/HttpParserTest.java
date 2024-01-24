@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpParserTest {
@@ -19,8 +22,59 @@ class HttpParserTest {
     }
 
     @Test
-    void parseHttpRequest() {
-        this.httpParser.parseHttpRequest(generateValidTestCase());
+    void parseHttpRequest() throws IOException, HttpParsingException {
+        HttpRequest request = this.httpParser.parseHttpRequest(generateValidTestCase());
+        Assertions.assertEquals(HttpMethod.GET, request.getMethod());
+    }
+
+    @Test
+    void parseHttpRequestWithBadMethodName() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidMethodNameTestCase());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.SERVER_ERROR_501_NOT_IMPLEMENTED, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithMethodNameTooLong() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidMethodNameTooLongTestCase());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.SERVER_ERROR_501_NOT_IMPLEMENTED, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithMethodTooManyItems() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidRequestLine());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithEmptyRequestLine() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidEmptyRequestLine());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithRequestLineNoNewLine() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidEmptyRequestLine());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST, hpe.getErrorCode());
+        }
     }
 
     private InputStream generateValidTestCase() {
@@ -36,6 +90,61 @@ class HttpParserTest {
                 "Sec-Fetch-Mode: navigate\r\n" +
                 "Accept-Encoding: gzip, deflate, br\r\n" +
                 "Accept-Language: en-US,en;q=0.9\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidMethodNameTestCase() {
+        String rawData = "GeT / HTTP/1.1\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidMethodNameTooLongTestCase() {
+        String rawData = "GETTTTTTTDDFSDFSDF / HTTP/1.1\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidRequestLine() {
+        String rawData = "GET / HTTP/1.1 JUNK_VALUE\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidEmptyRequestLine() {
+        String rawData = "\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidRequestLineNoReturn() {
+        String rawData = "GET / HTTP/1.1\r" +
                 "\r\n";
 
         InputStream inputStream = new ByteArrayInputStream(
