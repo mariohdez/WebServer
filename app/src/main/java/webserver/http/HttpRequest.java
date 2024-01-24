@@ -52,4 +52,12 @@ public class HttpRequest extends HttpMessage {
     public String getOriginalHttpVersion() {
         return this.originalHttpVersion;
     }
+
+    @Override
+    public String toString() {
+        String response = "method:" + getMethod() + "\n" +
+                "request target: " + getRequestTarget() + "\n" +
+                "request version: " + getOriginalHttpVersion() + "\n";
+        return response;
+    }
 }

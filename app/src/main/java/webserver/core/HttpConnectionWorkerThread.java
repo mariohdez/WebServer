@@ -2,6 +2,9 @@ package webserver.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import webserver.http.HttpParser;
+import webserver.http.HttpParsingException;
+import webserver.http.HttpRequest;
 
 import java.awt.image.LookupOp;
 import java.io.ByteArrayOutputStream;
@@ -26,12 +29,9 @@ public class HttpConnectionWorkerThread extends Thread {
         try {
             inputStream = socket.getInputStream();
             outputStream = socket.getOutputStream();
+            HttpRequest httpRequest = (new HttpParser()).parseHttpRequest(inputStream);
 
-            int _byte;
-
-            while ((_byte = inputStream.read()) != -1) {
-                System.out.print((char)_byte);
-            }
+            LOGGER.info("httpRequest {}", httpRequest.toString());
 
             String html = "<html><head><title>Simple Java HTTP Server</title></head><body><h1>This page was served using my Simple Java HTTP Server</h1></body></html>";
 
@@ -48,6 +48,8 @@ public class HttpConnectionWorkerThread extends Thread {
             LOGGER.info(" * Connection Processing Finished.");
         } catch (IOException e) {
             LOGGER.error("Problem with communication", e);
+        } catch (HttpParsingException e) {
+
         } finally {
             try {
                 inputStream.close();
