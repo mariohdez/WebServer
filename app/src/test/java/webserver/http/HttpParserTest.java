@@ -25,6 +25,7 @@ class HttpParserTest {
     void parseHttpRequest() throws IOException, HttpParsingException {
         HttpRequest request = this.httpParser.parseHttpRequest(generateValidTestCase());
         Assertions.assertEquals(HttpMethod.GET, request.getMethod());
+        Assertions.assertEquals("/", request.getRequestTarget());
     }
 
     @Test
@@ -70,10 +71,41 @@ class HttpParserTest {
     @Test
     void parseHttpRequestWithRequestLineNoNewLine() throws IOException {
         try {
-            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidEmptyRequestLine());
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidRequestLineNoReturn());
             fail();
         } catch (HttpParsingException hpe) {
             Assertions.assertEquals(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithInvalidHttpVersion() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateInvalidHttpVersionTestCase());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithUnsupportedHttpVersion() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateUnsupportedHttpVersionTestCase());
+            fail();
+        } catch (HttpParsingException hpe) {
+            Assertions.assertEquals(HttpStatusCode.SERVER_ERROR_505_HTTP_VERSION_NOT_SUPPORTED, hpe.getErrorCode());
+        }
+    }
+
+    @Test
+    void parseHttpRequestWithSupportedHttpVersion() throws IOException {
+        try {
+            HttpRequest request = this.httpParser.parseHttpRequest(generateSupportedHttpVersionTestCase());
+            Assertions.assertEquals(HttpVersion.HTTP_1_1, request.getBestCompatibleVersion());
+            Assertions.assertEquals("HTTP/1.4", request.getOriginalHttpVersion());
+        } catch (HttpParsingException hpe) {
+            fail();
         }
     }
 
@@ -145,6 +177,39 @@ class HttpParserTest {
 
     private InputStream generateInvalidRequestLineNoReturn() {
         String rawData = "GET / HTTP/1.1\r" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateInvalidHttpVersionTestCase() {
+        String rawData = "GET / HT/1.1\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateUnsupportedHttpVersionTestCase() {
+        String rawData = "GET / HTTP/2.1\r\n" +
+                "\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(
+                rawData.getBytes(StandardCharsets.US_ASCII)
+        );
+
+        return inputStream;
+    }
+
+    private InputStream generateSupportedHttpVersionTestCase() {
+        String rawData = "GET / HTTP/1.4\r\n" +
                 "\r\n";
 
         InputStream inputStream = new ByteArrayInputStream(

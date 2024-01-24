@@ -38,6 +38,12 @@ public class HttpParser {
                 _byte = inputStreamReader.read();
 
                 if (_byte == LF) {
+                    try {
+                        httpRequest.setHttpVersion(processingDataBuffer.toString());
+                    } catch (BadHttpVersionException bhve) {
+                        throw new HttpParsingException(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST);
+                    }
+
                     processingDataBuffer.delete(0, processingDataBuffer.length());
                     if (!methodParsed || !requestTargetParsed) {
                         throw new HttpParsingException(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST);
@@ -54,6 +60,7 @@ public class HttpParser {
                     httpRequest.setMethod(processingDataBuffer.toString());
                 } else if (!requestTargetParsed) {
                     requestTargetParsed = true;
+                    httpRequest.setRequestTarget(processingDataBuffer.toString());
                 } else {
                     throw new HttpParsingException(HttpStatusCode.CLIENT_ERROR_400_BAD_REQUEST);
                 }
